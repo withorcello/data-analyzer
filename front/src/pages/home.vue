@@ -7,18 +7,19 @@
       </div>
 
       <v-row justify="center">
-        <v-col cols="12" lg="8">
-          <v-container
+        <v-col cols="12" xl="5" lg="6" md="8" sm="10">
+          <v-card
             class="my-8 bg-grey-lighten-3 rounded-lg py-16"
+            elevation="0"
             @click="fileInput.click()"
             @drop.prevent="onDrop($event, 1)"
             @dragover.prevent
             @dragenter.prevent
           >
-            <v-icon class="my-10" color="#696969" size="58">
+            <v-icon class="my-6" color="#696969" size="48">
               mdi-tray-arrow-up
             </v-icon>
-          </v-container>
+          </v-card>
         </v-col>
       </v-row>
 
