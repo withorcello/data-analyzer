@@ -1,21 +1,47 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { RecordsFileDto } from './dto/records-file.dto';
+import { parse } from 'csv/sync';
 import * as Excel from 'exceljs';
 import * as dayjs from 'dayjs';
 import * as path from 'path';
-import { parse } from 'csv/sync';
+import * as fs from 'fs';
 
 @Injectable()
 export class FileService {
-  async analyzeFile(file: Express.Multer.File) {
-    const fileExt = path.extname(file.originalname);
+  async create(file: Express.Multer.File) {
+    try {
+      const fileExt = path.extname(file.originalname);
 
-    if (!['.xlsx', '.csv'].includes(fileExt)) {
+      if (!['.xlsx', '.csv'].includes(fileExt)) {
+        throw new BadRequestException({
+          message: 'Este tipo de arquivo não é aceito',
+          detail: 'Por favor selecione um arquivo com extenção xlsx ou csv',
+        });
+      }
+
+      const fileDir = `${__dirname}/../../files/${file.originalname}`;
+      fs.writeFile(fileDir, file.buffer, (err) => {
+        if (err) {
+          return {
+            message: 'Erro ao analizar arquivo',
+            detail: err.message,
+          };
+        }
+      });
+    } catch (error) {
+      return error;
+    }
+  }
+  async analyzeFile(fileName: string) {
+    const fileDir = `${__dirname}/../../files/${fileName}`;
+    if (!fs.existsSync(fileDir)) {
       throw new BadRequestException({
-        message: 'Este tipo de arquivo não é aceito',
-        detail: 'Por favor selecione um arquivo com extenção xlsx ou csv',
+        message: 'Erro ao analizar arquivo',
+        detail: 'Arquivo não encontrado tente fazer o upload novamente',
       });
     }
+    const file = fs.readFileSync(fileDir);
+    const fileExt = path.extname(fileName);
 
     let records = [];
     if (fileExt === '.xlsx') {
@@ -26,11 +52,9 @@ export class FileService {
 
     return this.getMonthlyRecurringRevenue(records);
   }
-  async getDataOfXslx(
-    file: Express.Multer.File,
-  ): Promise<Array<RecordsFileDto>> {
+  async getDataOfXslx(file: Buffer): Promise<Array<RecordsFileDto>> {
     const workbook = new Excel.Workbook();
-    const content = await workbook.xlsx.load(file.buffer);
+    const content = await workbook.xlsx.load(file);
 
     const worksheet = content.worksheets[0];
     const rows = worksheet.getRows(2, worksheet.rowCount) ?? [];
@@ -44,8 +68,8 @@ export class FileService {
       dataFim: row.getCell(9).toString(),
     }));
   }
-  getDataOfCsv(file: Express.Multer.File): Array<RecordsFileDto> {
-    const rows = parse(file.buffer, {
+  getDataOfCsv(file: Buffer): Array<RecordsFileDto> {
+    const rows = parse(file, {
       columns: true,
       delimiter: ',',
     });
@@ -55,8 +79,8 @@ export class FileService {
       dataInicio: row['data início'],
       status: row['status'],
       dataStatus: row['data status'],
-      dataCancelamento: row['data cancelamento,'],
-      valor: +row['valor'],
+      dataCancelamento: row['data cancelamento'],
+      valor: +row['valor'].replace(',', '.'),
       dataFim: row['próximo ciclo'],
     }));
   }
