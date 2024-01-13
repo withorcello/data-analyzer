@@ -1,12 +1,24 @@
 import { defineStore } from "pinia";
 import { Axios } from "@/plugins/axios";
+import { ref } from "vue";
 
 export const useFileStore = defineStore("upload", () => {
-  async function analyzeFile(file) {
+  const recordsMRR = ref([]);
+
+  async function analyzeFile(fileName) {
+    try {
+      const { data } = await Axios.get(`file/${fileName}`);
+
+      recordsMRR.value = data;
+    } catch (error) {
+      return error.message;
+    }
+  }
+  async function upload(file) {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      Axios.post("file", formData, {
+      await Axios.post("file", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -16,5 +28,5 @@ export const useFileStore = defineStore("upload", () => {
     }
   }
 
-  return { analyzeFile };
+  return { analyzeFile, upload, recordsMRR };
 });

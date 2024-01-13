@@ -30,16 +30,21 @@
 <script setup>
 import { ref } from "vue";
 import { useFileStore } from "@/store/file";
+import { useRouter } from "vue-router";
 
 const fileInput = ref(null);
 const store = useFileStore();
+const router = useRouter();
 
-function onDrop(event) {
+async function onDrop(event) {
   const file = event.dataTransfer.files[0];
   const xlsx = `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`;
 
   if ([xlsx, "text/csv"].includes(file.type)) {
-    store.analyzeFile(file)
+    await store.upload(file);
+    const fileName = Object.values(file.name).join("");
+    console.log(fileName);
+    router.push({ path: "statistics", query: { file: file.name } });
   }
 }
 </script>
