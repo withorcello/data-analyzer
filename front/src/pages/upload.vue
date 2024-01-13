@@ -29,14 +29,17 @@
 </template>
 <script setup>
 import { ref } from "vue";
+import { useFileStore } from "@/store/file";
 
 const fileInput = ref(null);
+const store = useFileStore();
+
 function onDrop(event) {
-  const arquivo = event.dataTransfer.files[0];
+  const file = event.dataTransfer.files[0];
   const xlsx = `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`;
 
-  if ([xlsx, "text/csv"].includes(arquivo.type)) {
-    console.log(arquivo);
+  if ([xlsx, "text/csv"].includes(file.type)) {
+    store.analyzeFile(file)
   }
 }
 </script>

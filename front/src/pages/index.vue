@@ -6,7 +6,7 @@
       <v-btn
         append-icon="mdi-chevron-right"
         variant="tonal"
-        @click="$router.push('/Home')"
+        @click="$router.push('/upload')"
       >
         Try now
       </v-btn>
